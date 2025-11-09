@@ -1,0 +1,16 @@
+# 1. Models and Weights
+# .pt (PyTorch) / .pth (PyTorch)
+*.pt
+*.pth
+*.h5
+*.onnx
+
+# 2. Directories
+data/
+models/
+
+# 3. Environment and Logs
+__pycache__/
+*.log
+.DS_Store
+.env
