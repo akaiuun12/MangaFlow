@@ -28,14 +28,13 @@ This section details how to clone the repository and set up the necessary enviro
 1. Clone the Repository
 
 ```Bash
-git clone [YOUR-REPO-URL-HERE]
+git clone https://github.com/akaiuun12/MangaFlow
 cd MangaFlow
 ```
 
 2. Create Virtual Environment
 
 ```Bash
-# Example using venv or Conda
 python -m venv .venv
 source .venv/bin/activate
 ```
@@ -43,7 +42,6 @@ source .venv/bin/activate
 3. Install Dependencies
 
 ```Bash
-# This assumes your requirements.txt is complete
 pip install -r requirements.txt
 ```
 
