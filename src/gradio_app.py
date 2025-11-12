@@ -4,39 +4,63 @@ import numpy as np
 import pandas as pd
 import gradio as gr
 
+# Import the detection function and model paths from the bbox module
+from modules.bbox import run_detection
+
+MODEL_PATHS = [
+    'v2023.12.07_s_yv11'
+]
+
 with gr.Blocks(theme=gr.themes.Soft(), title="MangaFlow AI Image Translator") as demo:
     gr.Markdown(
         """
-        # '📚' MangaFlow Text Detector
+        # 📚 MangaFlow Text Detector
         Upload a manga image and select a YOLO model to detect text regions.
         """
     )
 
     # ❇️ 탭 간 데이터 공유를 위한 상태 변수
-    ocr_data_state = gr.State(value=(None, None))
-    ocr_df_state = gr.State(value=pd.DataFrame(columns=["BOX ID", "COORDINATES", "DETECTED TEXT"]))
-    image_copy_state = gr.State(value=None)
-    auto_mask_state = gr.State(value=np.array([])) 
-    inpainting_result_state = gr.State(value=None)
+    # ocr_data_state = gr.State(value=(None, None))
+    # ocr_df_state = gr.State(value=pd.DataFrame(columns=["BOX ID", "COORDINATES", "DETECTED TEXT"]))
+    # image_copy_state = gr.State(value=None)
+    # auto_mask_state = gr.State(value=np.array([])) 
+    # inpainting_result_state = gr.State(value=None)
 
     with gr.Tabs():
         # --- 탭 1: 텍스트 감지 ---
         with gr.TabItem("1. Detect Text", elem_id="tab_detect"):
             detect_button = gr.Button("Detect Text", variant="primary")
-
+                                 
             with gr.Row():
                 with gr.Column(scale=1):
                     # 원본 이미지 업로드
                     img_input = gr.Image(type="numpy", label="📤 Upload Manga Image")
-                    # model_dropdown = gr.Dropdown(
-                    #     MODEL_PATHS,
-                    #     value=MODEL_PATHS[0],
-                    #     label="Select YOLO Model"
-                    # )
                                     
                 with gr.Column(scale=1):
                     detect_output = gr.Image(label="Detected Text Regions")
-
+            
+            model_dropdown = gr.Dropdown(
+                MODEL_PATHS,
+                value=MODEL_PATHS[0],
+                label="Select YOLO Model"
+            )
+            with gr.Row():
+                with gr.Column(scale=1):
+                    iou_slider = gr.Slider(
+                        minimum=0.0,
+                        maximum=1.0,
+                        step=0.1,
+                        value=0.7,
+                        label="IOU Threshold"
+                    )
+                with gr.Column(scale=1):
+                    conf_slider = gr.Slider(
+                        minimum=0.0,
+                        maximum=1.0,
+                        step=0.01,
+                        value=0.25,
+                        label="Confidence Threshold"
+                    )
         # # --- 탭 2: OCR ---
         # with gr.TabItem("2. OCR", elem_id="tab_ocr"):
         #     gr.Markdown("## OCR")
@@ -184,15 +208,15 @@ with gr.Blocks(theme=gr.themes.Soft(), title="MangaFlow AI Image Translator") as
     
     # ❇️ 버튼 클릭 이벤트 핸들러 연결
     # 1. 'Detect Text' 버튼 클릭 시
-    # detect_button.click(
-    #     fn=run_detection,
-    #     inputs=[img_input, model_dropdown],
-    #     outputs=[
-    #         detect_output,     
+    detect_button.click(
+        fn=run_detection,
+        inputs=[img_input, model_dropdown, iou_slider, conf_slider],
+        outputs=[
+            detect_output,     
     #         ocr_data_state,    
     #         ocr_input_image,   
     #         ocr_output_df      
-    #     ]
-    # )
+        ]
+    )
 
 demo.launch(share=False)
