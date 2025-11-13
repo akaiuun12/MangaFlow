@@ -60,7 +60,7 @@ def draw_boxes_on_image(image_np, detections, line_thickness=2):
         
     return cv2.cvtColor(image, cv2.COLOR_BGR2RGB) # RGB로 다시 변환 후 반환
 
-def run_detection(img_np: np.ndarray, model_name: str, iou: float=0.7, conf: float=0.25) -> np.ndarray:
+def run_detection(img_np: np.ndarray, model_name: str, iou: float=0.7, conf: float=0.25, st: dict = None) -> np.ndarray:
     """
     텍스트 감지를 실행하고 바운딩 박스가 그려진 이미지를 반환합니다.
     """
@@ -97,5 +97,11 @@ def run_detection(img_np: np.ndarray, model_name: str, iou: float=0.7, conf: flo
     detected_image_np = draw_boxes_on_image(img_np, detections)
     
     print(f"✅ 총 {len(detections)}개의 객체 탐지 완료.")
+
+    # 5. gradio 출력 반환
+    new_st = dict(st)
+    new_st["input_img"] = img_np
+    new_st["detections"] = detections
+    new_st["detect_img"] = detected_image_np
     
-    return detected_image_np
+    return gr.update(value=detected_image_np), gr.update(value=detected_image_np), new_st

@@ -4,12 +4,22 @@ import numpy as np
 import pandas as pd
 import gradio as gr
 
-# Import the detection function and model paths from the bbox module
 from modules.bbox import run_detection
-
+from modules.ocr import run_ocr
+    
 MODEL_PATHS = [
     'v2023.12.07_s_yv11'
 ]
+
+INIT_STATE = {
+    "input_img": None,
+    "detections": None,
+    "detect_img": None,
+    "ocr_df": pd.DataFrame(columns=["BOX ID","COORDINATES","DETECTED TEXT"]),
+#     "image_copy": None,
+#     "auto_mask": np.array([]),
+#     "inpaint": None,
+}
 
 with gr.Blocks(theme=gr.themes.Soft(), title="MangaFlow AI Image Translator") as demo:
     gr.Markdown(
@@ -20,6 +30,8 @@ with gr.Blocks(theme=gr.themes.Soft(), title="MangaFlow AI Image Translator") as
     )
 
     # ❇️ 탭 간 데이터 공유를 위한 상태 변수
+    st = gr.State(value=INIT_STATE)
+
     # ocr_data_state = gr.State(value=(None, None))
     # ocr_df_state = gr.State(value=pd.DataFrame(columns=["BOX ID", "COORDINATES", "DETECTED TEXT"]))
     # image_copy_state = gr.State(value=None)
@@ -29,7 +41,7 @@ with gr.Blocks(theme=gr.themes.Soft(), title="MangaFlow AI Image Translator") as
     with gr.Tabs():
         # --- 탭 1: 텍스트 감지 ---
         with gr.TabItem("1. Detect Text", elem_id="tab_detect"):
-            detect_button = gr.Button("Detect Text", variant="primary")
+            detect_button = gr.Button("Detect Textboxes from Image", variant="primary")
                                  
             with gr.Row():
                 with gr.Column(scale=1):
@@ -37,7 +49,7 @@ with gr.Blocks(theme=gr.themes.Soft(), title="MangaFlow AI Image Translator") as
                     img_input = gr.Image(type="numpy", label="📤 Upload Manga Image")
                                     
                 with gr.Column(scale=1):
-                    detect_output = gr.Image(label="Detected Text Regions")
+                    detect_output = gr.Image(label="Detected Text Regions", interactive=False)
             
             model_dropdown = gr.Dropdown(
                 MODEL_PATHS,
@@ -61,29 +73,27 @@ with gr.Blocks(theme=gr.themes.Soft(), title="MangaFlow AI Image Translator") as
                         value=0.25,
                         label="Confidence Threshold"
                     )
-        # # --- 탭 2: OCR ---
-        # with gr.TabItem("2. OCR", elem_id="tab_ocr"):
-        #     gr.Markdown("## OCR")
-        #     ocr_button = gr.Button("Run OCR on Detected Boxes", variant="primary")
+        # --- 탭 2: OCR ---
+        with gr.TabItem("2. OCR", elem_id="tab_ocr"):
+            ocr_button = gr.Button("Run OCR on Detected Boxes", variant="primary")
 
-        #     with gr.Column():
-        #         with gr.Row(scale=1):
-        #             ocr_input_image = gr.Image(label="Original Image with Boxes", 
-        #                                        interactive=False,
-        #                                        scale=1)
-                    
-        #             with gr.Column(scale=1):
-        #                 gr.Markdown("## OCR Results")
-        #                 ocr_output_df = gr.Dataframe(
-        #                     label="Extracted Text Table",
-        #                     headers=["BOX ID", "COORDINATES", "DETECTED TEXT"],
-        #                     col_count=(3, "fixed"),
-        #                     row_count="dynamic",
-        #                     value=pd.DataFrame(columns=["BOX ID", "COORDINATES", "DETECTED TEXT"]),
-        #                     datatype=["str", "str", "str"],
-        #                     interactive=True,
-        #                 )
+            with gr.Row():
+                with gr.Column(scale=1):
+                    ocr_input_image = gr.Image(label="Original Image with Boxes", 
+                                               interactive=False,
+                                               scale=1)
                         
+                with gr.Column(scale=1):
+                    ocr_output_df = gr.Dataframe(
+                        label="Extracted Text Table",
+                        headers=["BOX ID", "COORDINATES", "DETECTED TEXT"],
+                        col_count=(3, "fixed"),
+                        row_count="dynamic",
+                        value=pd.DataFrame(columns=["BOX ID", "COORDINATES", "DETECTED TEXT"]),
+                        datatype=["str", "str", "str"],
+                        interactive=True,
+                    )
+                    
         #                 go_to_translation_button = gr.Button("Go to Translation →", variant="secondary", elem_id="btn_translate")
                     
         # # --- 탭 3: Translate ---
@@ -210,13 +220,15 @@ with gr.Blocks(theme=gr.themes.Soft(), title="MangaFlow AI Image Translator") as
     # 1. 'Detect Text' 버튼 클릭 시
     detect_button.click(
         fn=run_detection,
-        inputs=[img_input, model_dropdown, iou_slider, conf_slider],
-        outputs=[
-            detect_output,     
-    #         ocr_data_state,    
-    #         ocr_input_image,   
-    #         ocr_output_df      
-        ]
+        inputs=[img_input, model_dropdown, iou_slider, conf_slider, st],
+        outputs=[detect_output, ocr_input_image, st]
+    )
+
+    # 2. 'Run OCR' 버튼 클릭 시
+    ocr_button.click(
+        fn=run_ocr,
+        inputs=[st], 
+        outputs=[ocr_output_df, st]
     )
 
 demo.launch(share=False)
