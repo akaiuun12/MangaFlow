@@ -6,9 +6,18 @@ import gradio as gr
 
 from modules.bbox import run_detection
 from modules.ocr import run_ocr
+from modules.translator import run_translation
     
 MODEL_PATHS = [
     'v2023.12.07_s_yv11'
+]
+
+API_OPTIONS = [   
+    "gemini-2.5-pro",
+    "gemini-2.5-flash",
+    'gemini-2.5-flash-lite', 
+    "gemini-2.0-flash",
+    "gemini-2.0-flash-lite"
 ]
 
 INIT_STATE = {
@@ -24,7 +33,8 @@ INIT_STATE = {
 with gr.Blocks(theme=gr.themes.Soft(), title="MangaFlow AI Image Translator") as demo:
     gr.Markdown(
         """
-        # 📚 MangaFlow Text Detector
+        # 📚 MangaFlow 
+        ## Sequential Manga Text Translator
         Upload a manga image and select a YOLO model to detect text regions.
         """
     )
@@ -96,33 +106,32 @@ with gr.Blocks(theme=gr.themes.Soft(), title="MangaFlow AI Image Translator") as
                     
         #                 go_to_translation_button = gr.Button("Go to Translation →", variant="secondary", elem_id="btn_translate")
                     
-        # # --- 탭 3: Translate ---
-        # with gr.TabItem("3. Translate", elem_id="tab_translate"):
-        #     with gr.Row():
-        #         with gr.Column(scale=1):
-        #             gr.Markdown("### Image Preview (with Boxes)")
-        #             # ❇️ 텍스트 박스가 그려진 이미지 미리보기 (번역용)
-        #             translation_image_preview = gr.Image(
-        #                 label="Image Preview",
-        #                 interactive=False
-        #             )
-        #             api_selector = gr.Radio(
-        #                 ["Gemini API (Google)", "ChatGPT API (OpenAI)"],
-        #                 value="Gemini API (Google)",
-        #                 label="Select Translation API"
-        #             )
-        #             run_translation_button = gr.Button("Run Translation", variant="primary")
+        # --- 탭 3: Translate ---
+        with gr.TabItem("3. Translate", elem_id="tab_translate"):
+            run_translation_button = gr.Button("Run Translation", variant="primary")
+            api_selector = gr.Dropdown(
+                API_OPTIONS,
+                value=API_OPTIONS[1],
+                label="Select Translation API"
+            )
+            
+            with gr.Row():
+                with gr.Column(scale=1):
+                    translation_preview_image = gr.Image(
+                        label="Image Preview",
+                        interactive=False
+                    )
                     
-        #         with gr.Column(scale=1):
-        #             gr.Markdown("### Translation Results")
-        #             translation_output_df = gr.Dataframe(
-        #                 headers=["ORIGINAL TEXT", "TRANSLATED TEXT"],
-        #                 col_count=(2, "fixed"),
-        #                 row_count="dynamic",
-        #                 value=pd.DataFrame(columns=["ORIGINAL TEXT", "TRANSLATED TEXT"]),
-        #                 datatype=["str", "str"],
-        #                 interactive=True,
-        #             )
+                with gr.Column(scale=1):
+                    translation_output_df = gr.Dataframe(
+                        label="Translated Text Table",
+                        headers=["ORIGINAL TEXT", "TRANSLATED TEXT"],
+                        col_count=(2, "fixed"),
+                        row_count="dynamic",
+                        value=pd.DataFrame(columns=["ORIGINAL TEXT", "TRANSLATED TEXT"]),
+                        datatype=["str", "str"],
+                        interactive=True,
+                    )
                     
         #             go_to_inpaint_button = gr.Button("Go to Inpainting →", variant="secondary", elem_id="btn_inpaint")
         
@@ -221,14 +230,22 @@ with gr.Blocks(theme=gr.themes.Soft(), title="MangaFlow AI Image Translator") as
     detect_button.click(
         fn=run_detection,
         inputs=[img_input, model_dropdown, iou_slider, conf_slider, st],
-        outputs=[detect_output, ocr_input_image, st]
+        outputs=[detect_output, ocr_input_image, translation_preview_image, st]
     )
 
     # 2. 'Run OCR' 버튼 클릭 시
     ocr_button.click(
         fn=run_ocr,
         inputs=[st], 
-        outputs=[ocr_output_df, st]
+        outputs=[ocr_output_df, translation_output_df, st]
     )
+
+    # 3. 'Run Translation' 버튼 클릭 시
+    run_translation_button.click(
+        fn=run_translation,
+        inputs=[st, api_selector], 
+        outputs=[translation_output_df] 
+    )
+
 
 demo.launch(share=False)

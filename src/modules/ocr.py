@@ -41,4 +41,4 @@ def run_ocr(st):
     new_st = dict(st)
     new_st["ocr_df"] = ocr_df
     
-    return gr.update(value=ocr_df), new_st
+    return gr.update(value=ocr_df), gr.update(value=ocr_df), new_st

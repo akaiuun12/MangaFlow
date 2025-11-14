@@ -104,4 +104,4 @@ def run_detection(img_np: np.ndarray, model_name: str, iou: float=0.7, conf: flo
     new_st["detections"] = detections
     new_st["detect_img"] = detected_image_np
     
-    return gr.update(value=detected_image_np), gr.update(value=detected_image_np), new_st
+    return gr.update(value=detected_image_np), gr.update(value=detected_image_np), gr.update(value=detected_image_np), new_st
